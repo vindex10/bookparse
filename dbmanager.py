@@ -13,6 +13,6 @@ class DBManager(object):
                                  ,db=self.config["dbname"])
 
     def insert_items(self, bid, pnum, data):
-        print "Bookid: "+str(bid)+"    Page: "+str(pnum)
+        print("Bookid: "+str(bid)+"    Page: "+str(pnum))
         for i in data:
-            print i
+            print(i)

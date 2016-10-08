@@ -12,6 +12,7 @@ from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.converter import PDFPageAggregator
 from pdfminer.layout import LAParams
 
+
 from tools import recognize, parse
 from dbmanager import DBManager
 

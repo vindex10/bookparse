@@ -1,3 +1,5 @@
+import pdfminer.settings
+pdfminer.settings.STRICT = False
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfpage import PDFPage
@@ -39,7 +41,7 @@ def type3(page):
     def parseit(obj):
         res = [""]
         if isinstance(obj, LTChar):
-            if isinstance(res[-1], basestring):
+            if isinstance(res[-1], str):
                 res[-1] += obj.get_text()
             else:
                 res.append(obj.get_text())
@@ -50,7 +52,7 @@ def type3(page):
         elif isinstance(obj, LTFigure) or isinstance(obj, LTPage):
             for subobj in obj:
                 subpar = parseit(subobj)
-                if isinstance(res[-1], basestring) and isinstance(subpar[0], basestring):
+                if isinstance(res[-1], str) and isinstance(subpar[0], str):
                     res = res[:-1] + [res[-1]+subpar[0]] + subpar[1:]
                 else:
                     res = res + subpar
