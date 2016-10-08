@@ -12,55 +12,55 @@ from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.converter import PDFPageAggregator
 from pdfminer.layout import LAParams
 
-from parser import Parser
-from recognizer import Recognizer
+from tools import recognize, parse
 from dbmanager import DBManager
 
 
-class BookParser(object):
-    laparams = {"char_margin": 4,
-                "word_margin": 6,
-                "boxes_flow": 1.5,
-                "line_margin": 0.4
-               }
+def BookParse(bookid, pages=None, exclude=None):
+    if pages is None:
+        pages = set()
+    if exclude is None:
+        exclude = set()
 
-    def __init__(self, file=None, pages=set()\
-                 , exclude=set(), laparams=dict()):
-        self.file = file
-        self.pages = pages
-        self.exclude = exclude
-        self.laparams.update(laparams)
+    bookpath = "data/book" + str(bookid) + ".pdf"
+    if os.path.exists(bookpath):
+        bookfile = open("data/book" + str(bookid) + ".pdf", "rb")
+    else:
+        raise IOError("No such book with id " + str(bookid) + " in data dir")
+    mineparser = PDFParser(bookfile)
+    document = PDFDocument(mineparser)
+    if not document.is_extractable:
+        raise PDFTextExtractionNotAllowed
 
-    def run(self):
-        mineparser = PDFParser(self.file)
-        document = PDFDocument(mineparser)
-        if not document.is_extractable:
-            raise PDFTextExtractionNotAllowed
+    db = DBManager()
 
-        rec = Recognizer()
-        par = Parser()
-        db = DBManager()
-
-        for pagenum, page in enumerate(PDFPage.create_pages(document)):
-            realnum = pagenum + 1
-            if len(self.pages) > 0\
-               and realnum in self.pages\
-               and realnum not in self.exclude:
-                pagetype = rec.get_pagetype(page)
-                data = par.parse(page, pagetype)
-                db.insert_items(data)
-
-
-
-
+    for pagenum, page in enumerate(PDFPage.create_pages(document)):
+        realnum = pagenum + 1
+        if (len(pages) > 0 and realnum not in pages)\
+           or realnum in exclude:
+            continue
+        pagetype = recognize(bookid, page)
+        data = parse(bookid, page, pagetype)
+        db.insert_items(bookid, realnum, data)
 
 if __name__ == "__main__":
     argp = argparse.ArgumentParser()
-    argp.add_argument("-f", "--file"
-                      , type=argparse.FileType("rb")
-                      , help="Path to file to process")
 
-    def numrange(string):
+    def isbookid(string):
+        try:
+            int(string)
+        except:
+            raise argparse.ArgumentTypeError("Book id should be an integer")
+        path = "data/book"+string+".pdf"
+        if os.path.exists(path):
+            return int(string)
+        else:
+            argparse.ArgumentError("bookid", "The book with such id does not exist")
+    argp.add_argument("bookid"
+                      , type=isbookid
+                      , help="Book id. The file should be named like book123.pdf")
+
+    def isnumrange(string):
         string = string.replace(" ", "")
         parts = string.split(",")
         parts = filter(None, parts)
@@ -80,16 +80,18 @@ if __name__ == "__main__":
                 raise argparse.ArgumentTypeError("Wrong argument format")
 
         return res
-
-
     argp.add_argument("-p", "--pages"
-                      , type=numrange
+                      , type=isnumrange
+                      , default=set()
                       , help="Range of pages to process")
     argp.add_argument("-e", "--exclude"
-                      , type=numrange
+                      , type=isnumrange
+                      , default=set()
                       , help="Range of pages to exclude")
 
     pargs = argp.parse_args()
     args = vars(pargs)
     if len(args["pages"]) > 0:
         args["pages"] = args["pages"] - args["exclude"]
+
+    BookParse(**args)
