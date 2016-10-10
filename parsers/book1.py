@@ -12,6 +12,10 @@ from pdfminer.layout import LAParams, LTChar, LTTextBox, LTTextLine, LTFigure, L
 pagetypes = dict()
 
 def add_type(tid, typestr):
+    """Use this function when adding new parser for new pagetype.
+    This func updates collection of types, it is important for full
+    process of parsing
+    """
     try:
         if typestr in pagetypes.values():
             raise Exception("Such funcname already exists")
@@ -65,4 +69,5 @@ def type3(page):
     parsed = parseit(layout)
     parsed = filter(None, parsed)
 
-    return parsed
+    #return parsed
+    return {"itemnum": 10, "other": "Hello world!"}

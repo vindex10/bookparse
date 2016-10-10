@@ -18,6 +18,13 @@ from dbmanager import DBManager
 
 
 def BookParse(bookid, pages=None, exclude=None):
+    """ Takes id of book to parse. Id of book is one from DB,
+    and should correspond to filename as book12.pdf,
+    for id of the book in DB is 12. Also function accepts
+    optional argument "pages", it defines pages to parse, and
+    optional argument "exclude", to define pages to exclude.
+    Range format accepted: 1,2,3-8,15
+    """
     if pages is None:
         pages = set()
     if exclude is None:
@@ -51,15 +58,16 @@ if __name__ == "__main__":
         try:
             int(string)
         except:
-            raise argparse.ArgumentTypeError("Book id should be an integer")
+            raise argparse.ArgumentTypeError("Book id must be integer")
         path = "data/book"+string+".pdf"
         if os.path.exists(path):
             return int(string)
         else:
             argparse.ArgumentError("bookid", "The book with such id does not exist")
     argp.add_argument("bookid"
-                      , type=isbookid
-                      , help="Book id. The file should be named like book123.pdf")
+                     ,type=isbookid
+                     ,help="Book id. The file should be named like book123.pdf"
+                     )
 
     def isnumrange(string):
         string = string.replace(" ", "")
@@ -82,13 +90,13 @@ if __name__ == "__main__":
 
         return res
     argp.add_argument("-p", "--pages"
-                      , type=isnumrange
-                      , default=set()
-                      , help="Range of pages to process")
+                     ,type=isnumrange
+                     ,default=set()
+                     ,help="Range of pages to process. Format: 1,2,3-8,10")
     argp.add_argument("-e", "--exclude"
-                      , type=isnumrange
-                      , default=set()
-                      , help="Range of pages to exclude")
+                     ,type=isnumrange
+                     ,default=set()
+                     ,help="Range of pages to exclude. Format: 1,2,3-8,10")
 
     pargs = argp.parse_args()
     args = vars(pargs)
