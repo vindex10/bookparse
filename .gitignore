@@ -1,6 +1,6 @@
 /data/
 /output/
-/config/
+/config/*.conf
 /.env
 /.prj
 *.py[cod]
