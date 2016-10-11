@@ -32,5 +32,4 @@ You manually add book to DB, then taking the ID, rename your book into the form:
 To do
 -----
 * Improve help :)
-* May be detach each parser into separate file
 * Add functions to deal with DB.page, especially include pdf2html convertion

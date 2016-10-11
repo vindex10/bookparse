@@ -1,6 +1,5 @@
 from importlib import import_module
 
-
 def recognize(bookid, page):
     """Gets bookid and page(instance of pdfminer.PDFPage), loads a collection
     of recognizers which correspond to the book, and maps them one by one
@@ -34,10 +33,11 @@ def parse(bookid, page, pagetype):
         raise ValueError("Bookid must be integer")
     try:
         bookpar = import_module("parsers.book" + str(bookid))
+        pagepar = import_module(bookpar.__name__ + "."\
+                                + str(bookpar.pagetypes[pagetype]))
     except:
         print("No such parser found for book with id " + str(bookid)+\
             ". Please name your parser as book" + str(bookid) + ".py")
         raise
 
-    func = getattr(bookpar, bookpar.pagetypes[pagetype])
-    return func(page)
+    return pagepar.parse(page)

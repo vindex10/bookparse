@@ -50,6 +50,7 @@ class DBManager(object):
                 " VALUES (" + paramkeys + ")"
         cur.execute(query, tuple(valist))
 
+        print(query)
         self.db.commit()
 
     def insert_items(self, bid, pnum, data):
