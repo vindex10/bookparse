@@ -1,4 +1,13 @@
+from io import BytesIO
 from importlib import import_module
+from hashlib import md5
+from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from pdfminer.converter import HTMLConverter
+from pdfminer.layout import LAParams
+from pdfminer.pdfpage import PDFPage
+
+from dbmanager import DBManager
+db = DBManager()
 
 def recognize(bookid, page):
     """Gets bookid and page(instance of pdfminer.PDFPage), loads a collection
@@ -41,3 +50,36 @@ def parse(bookid, page, pagetype):
         raise
 
     return pagepar.parse(page)
+
+def pdftohtml(page):
+    output = BytesIO()
+    manager = PDFResourceManager()
+
+    class imagewriter(object):
+        @staticmethod
+        def export_image(img):
+            if img.stream:
+                fstream = img.stream.get_rawdata()
+            else:
+                return "undefined"
+
+            imhash = md5(fstream).hexdigest()
+            imgid = db.get_imgbyhash(imhash)
+
+            if imgid is not "undefined":
+                return "items."+str(imgid)
+            else:
+                return "undefined"
+
+    converter = HTMLConverter(manager
+                             ,output
+                             ,laparams=LAParams()
+                             ,imagewriter=imagewriter)
+    interpreter = PDFPageInterpreter(manager, converter)
+
+    interpreter.process_page(page)
+    converter.close()
+    text = output.getvalue().decode("utf-8")
+    output.close()
+
+    return text

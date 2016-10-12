@@ -13,7 +13,7 @@ from pdfminer.converter import PDFPageAggregator
 from pdfminer.layout import LAParams
 
 
-from tools import recognize, parse
+from tools import recognize, parse, pdftohtml
 from dbmanager import DBManager
 
 
@@ -49,7 +49,9 @@ def BookParse(bookid, pages=None, exclude=None):
             continue
         pagetype = recognize(bookid, page)
         data = parse(bookid, page, pagetype)
-        db.insert_items(bookid, realnum, data)
+        db.insert_items(bookid, data)
+        html = pdftohtml(page)
+        db.insert_page(bookid, html)
 
 if __name__ == "__main__":
     argp = argparse.ArgumentParser()

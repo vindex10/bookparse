@@ -37,13 +37,14 @@ def parse(page):
                 else:
                     res = res + subpar
         elif isinstance(obj, LTImage):
-            res += [("Image", obj.bbox)]
+            rawdata = obj.stream.get_rawdata()
+            res += [("Image", obj.bbox, rawdata)]
         return res
 
     interpreter.process_page(page)
     layout = device.get_result()
     parsed = parseit(layout)
-    parsed = filter(None, parsed)
+    parsed = list(filter(None, parsed))
 
     #return parsed
-    return {"itemnum": 10, "other": "Hello world!"}
+    return {"itemnum": 13, "other": "testimg"}
