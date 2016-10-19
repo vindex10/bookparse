@@ -13,6 +13,7 @@ class DBManager(object):
         self.db = MySQLdb.connect(user=self.config["dbuser"]
                                  ,passwd=self.config["dbpass"]
                                  ,db=self.config["dbname"])
+        self.db.set_character_set('utf8')
 
     def insert_page(self, bid, data):
         cur = self.db.cursor()
