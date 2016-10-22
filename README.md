@@ -12,7 +12,7 @@ Installation consists of a few simple steps:
 
 * Install git, and clone repo
 * Install python, and virtualenv. Initialize virtualenv in repo. Activate
-* Create MySQL database. Create DB. Import [dump](https://bitbucket.org/vindex10/bookparse/downloads/bookdata.dump.tgz)
+* Create MySQL database. Create DB. Import [dump](https://bitbucket.org/vindex10/bookparse/downloads/bookdata.sql.gz)
 * Copy /config/dbmanager.config from default one. Fill requisites.
 * Put pdf named book1.pdf in "/data" dir. [Book for testing](https://bitbucket.org/vindex10/bookparse/downloads/book1.pdf)
 * Now simply run: python manage.py 1 --pages 1-2 --exclude 2
