@@ -47,4 +47,15 @@ def parse(page):
     parsed = list(filter(None, parsed))
 
     #return parsed
-    return {"itemonpage": 12, "pagenum": 2, "other": "something"}
+    itemcounter = 2
+
+    res = list()
+    images = list(filter(lambda item: item[0] is "Image",parsed))
+
+    for img in images:
+        res.append({"image": img[2], "itemonpage": itemcounter, "other": str(img[1])})
+        itemcounter += 1
+
+    res.append({"itemonpage": 1, "other": "something"})
+
+    return res

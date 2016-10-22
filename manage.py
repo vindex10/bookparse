@@ -53,7 +53,7 @@ def BookParse(bookid, pages=None, exclude=None):
 
         pagetype = recognize(bookid, page)
         data = parse(bookid, page, pagetype)
-        db.insert_items(bookid, data)
+        db.insert_items(bookid, data, pnum=realnum)
 
         # Update page entry with parsed HTML
         html = pdftohtml(page)

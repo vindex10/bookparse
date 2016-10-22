@@ -34,7 +34,7 @@ class DBManager(object):
         cur.execute(query, (bdata[1], bdata[2], data, pagenum, data))
         self.db.commit()
 
-    def insert_item(self, bid, data):
+    def insert_item(self, bid, data, pnum=None):
         """Insert item to DB.items. Add info about book (isbn1, keyname),
         previously fetched by provided book id (bid).
         """
@@ -59,6 +59,8 @@ class DBManager(object):
         if len(qdata) > 0:
             qdata.update({"isbn1": bdata[1]
                          ,"keyname": bdata[2]})
+            if pnum is not None:
+                qdata.update({"pagenum": pnum})
         else:
             return
 
@@ -81,15 +83,15 @@ class DBManager(object):
 
         self.db.commit()
 
-    def insert_items(self, bid, data):
+    def insert_items(self, bid, data, pnum=None):
         """Insert items to DB.items item-by-item.
         See more in insert_item definition
         """
         if isinstance(data, dict):
-            self.insert_item(bid, data)
+            self.insert_item(bid, data, pnum)
         else:
             for item in data:
-                self.insert_item(bid, item)
+                self.insert_item(bid, item, pnum)
 
     def get_imgbyhash(self, imhash):
         cur = self.db.cursor()
