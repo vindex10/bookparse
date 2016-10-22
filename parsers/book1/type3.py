@@ -47,4 +47,4 @@ def parse(page):
     parsed = list(filter(None, parsed))
 
     #return parsed
-    return {"itemnum": 13, "other": "testimg"}
+    return {"itemonpage": 12, "pagenum": 2, "other": "something"}

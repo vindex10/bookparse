@@ -47,11 +47,17 @@ def BookParse(bookid, pages=None, exclude=None):
         if (len(pages) > 0 and realnum not in pages)\
            or realnum in exclude:
             continue
+
+        # Insert page entry to db, no HTML
+        db.insert_page(bookid, realnum)
+
         pagetype = recognize(bookid, page)
         data = parse(bookid, page, pagetype)
         db.insert_items(bookid, data)
+
+        # Update page entry with parsed HTML
         html = pdftohtml(page)
-        db.insert_page(bookid, html)
+        db.insert_page(bookid, realnum, data=html)
 
 if __name__ == "__main__":
     argp = argparse.ArgumentParser()

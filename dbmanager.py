@@ -15,29 +15,23 @@ class DBManager(object):
                                  ,db=self.config["dbname"])
         self.db.set_character_set('utf8')
 
-    def insert_page(self, bid, data):
+    def insert_page(self, bid, pagenum, data=None):
         cur = self.db.cursor()
 
         try:
             cur.execute("""SELECT id, isbn1, keyname
                 FROM book WHERE id=%s""", (bid,))
             bdata = cur.fetchone()
-
-            cur.execute("""SELECT MAX(pagenum)
-                    FROM pages WHERE isbn1=%s""", (bdata[1],))
-            try:
-                pagenum = cur.fetchone()[0]
-            except:
-                pagenum = 1
         except:
             print("DBManager: no such book with id "+str(bid))
             raise
 
         query = """INSERT INTO pages (isbn1, keyname, pagedata, pagenum)
-                        VALUES (%s, %s, %s, %s)"""
+                    VALUES (%s, %s, %s, %s) ON DUPLICATE KEY
+                    UPDATE pagedata=%s"""
 
         # print(query % (bdata[1], bdata[2], data, pagenum))
-        cur.execute(query, (bdata[1], bdata[2], data, pagenum))
+        cur.execute(query, (bdata[1], bdata[2], data, pagenum, data))
         self.db.commit()
 
     def insert_item(self, bid, data):
@@ -45,7 +39,7 @@ class DBManager(object):
         previously fetched by provided book id (bid).
         """
         item_fields = ("itemnum",\
-                       "column", "itemonpage", "all", "name",\
+                       "column", "pagenum", "itemonpage", "all", "name",\
                        "description", "other", "image",\
                        "linktoimage", "note", "address", "country",\
                        "picmisk", "pricestart", "priceend",\
@@ -68,13 +62,22 @@ class DBManager(object):
         else:
             return
 
-        keylist = ",".join(qdata.keys())
-        valist = qdata.values()
-        paramkeys = ("%s,"*len(valist))[:-1]
+        keylist = list()
+        valist = list()
+        for key,val in qdata.items():
+            keylist.append(key)
+            valist.append(val)
 
-        query = "INSERT INTO items (" + keylist + ")"\
-                " VALUES (" + paramkeys + ")"
-        cur.execute(query, tuple(valist))
+        paramkeys = ("%s,"*len(valist))[:-1]
+        updkeys = [key for key in keylist if key
+            not in ("id", "isbn1", "pagenum", "itemonpage", "keyname")]
+        updvals = [qdata[key] for key in updkeys]
+        updkeys = [str(key) + "=%s" for key in updkeys]
+
+        query = "INSERT INTO items (" + ",".join(keylist) + ")"\
+                " VALUES (" + paramkeys + ") ON DUPLICATE KEY"\
+                " UPDATE " + ",".join(updkeys)
+        cur.execute(query, tuple(valist + updvals))
 
         self.db.commit()
 
