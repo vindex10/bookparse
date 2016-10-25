@@ -1,4 +1,7 @@
 import json
+import logging
+import logging.config
+import sys
 
 def load_config(cnfname, defcnf=None):
     """Load confiig from file at /config with name cnfname.conf,

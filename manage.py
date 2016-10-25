@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import sys
 import re
@@ -14,8 +15,20 @@ from pdfminer.layout import LAParams
 
 
 from tools import recognize, parse, pdftohtml
+from misc import load_config
 from dbmanager import DBManager
 
+lg = logging.getLogger(__name__)
+
+logconf = load_config("logging", defcnf={
+     "version": 1
+    ,"disable_existing_loggers": False
+})
+logging.config.dictConfig(logconf)
+
+handler = [h for h in lg.handlers if h._name == "file"]
+if len(handler) is not 0:
+    handler[0].doRollover()
 
 def BookParse(bookid, pages=None, exclude=None):
     """ Takes id of book to parse. Id of book is one from DB,
