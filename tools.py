@@ -1,3 +1,4 @@
+import logging
 from io import BytesIO
 from importlib import import_module
 from hashlib import md5
@@ -6,8 +7,13 @@ from pdfminer.converter import HTMLConverter
 from pdfminer.layout import LAParams
 from pdfminer.pdfpage import PDFPage
 
+from misc import exception_msg
+
 from dbmanager import DBManager
 db = DBManager()
+
+
+lg = logging.getLogger(__name__)
 
 def recognize(bookid, page):
     """Gets bookid and page(instance of pdfminer.PDFPage), loads a collection
@@ -16,13 +22,20 @@ def recognize(bookid, page):
     """
     try:
         int(bookid)
-    except:
-        raise ValueError("Bookid must be integer")
+    except ValueError as e:
+        exception_msg(lg, e
+                        , level="ERR"
+                        , text="Bookid must be an integer")
+        raise
+
     try:
         bookrec = import_module("recognizers.book" + str(bookid))
-    except:
-        print("No such recognizer found for book with id " + str(bookid)+\
-            ". Please name your recognizer as book" + str(bookid) + ".py")
+    except ImportError as e:
+        exception_msg(lg, e
+                        , level="ERR"
+                        , text="No such recognizer found for book (id=%s)."
+                               " Please name your recognizer as book%s.py"\
+                               % (str(bookid), str(bookid)))
         raise
 
     for (t, func) in bookrec.pagetypes.items():
@@ -44,9 +57,12 @@ def parse(bookid, page, pagetype):
         bookpar = import_module("parsers.book" + str(bookid))
         pagepar = import_module(bookpar.__name__ + "."\
                                 + str(bookpar.pagetypes[pagetype]))
-    except:
-        print("No such parser found for book with id " + str(bookid)+\
-            ". Please name your parser as book" + str(bookid) + ".py")
+    except ImportError as e:
+        exception_msg(lg, e
+                        , level="ERR"
+                        , text="No such parser found for book (id=%s)."
+                               "Please name your parser as book%s.py"\
+                                % (str(bookid), str(bookid)))
         raise
 
     return pagepar.parse(page)

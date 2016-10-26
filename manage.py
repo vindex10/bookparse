@@ -1,5 +1,6 @@
 import argparse
 import logging
+import logging.config
 import os
 import sys
 import re
@@ -15,7 +16,7 @@ from pdfminer.layout import LAParams
 
 
 from tools import recognize, parse, pdftohtml
-from misc import load_config
+from misc import load_config, exception_msg
 from dbmanager import DBManager
 
 lg = logging.getLogger(__name__)
@@ -43,34 +44,80 @@ def BookParse(bookid, pages=None, exclude=None):
     if exclude is None:
         exclude = set()
 
-    bookpath = "data/book" + str(bookid) + ".pdf"
-    if os.path.exists(bookpath):
+    try:
         bookfile = open("data/book" + str(bookid) + ".pdf", "rb")
-    else:
-        raise IOError("No such book with id " + str(bookid) + " in data dir")
+    except FileNotFoundError as e:
+        exception_msg(lg, e
+                        , level="ERR"
+                        , text="No such book (id=%s) in data dir."\
+                                 % str(bookid))
+        raise
+
     mineparser = PDFParser(bookfile)
     document = PDFDocument(mineparser)
     if not document.is_extractable:
+        lg.error("PDF text extraction is not allowed.")
         raise PDFTextExtractionNotAllowed
 
     db = DBManager()
 
     for pagenum, page in enumerate(PDFPage.create_pages(document)):
         realnum = pagenum + 1
+        lg.info("Working on page %s (bookid=%s)", str(realnum), str(bookid))
         if (len(pages) > 0 and realnum not in pages)\
            or realnum in exclude:
+            lg.info("Page %s (bookid=%s) excluded.", str(realnum), str(bookid))
             continue
 
         # Insert page entry to db, no HTML
         db.insert_page(bookid, realnum)
 
+        lg.info("Recognizing (pagenum=%s) of book (id=%s).", str(realnum), str(bookid))
         pagetype = recognize(bookid, page)
-        data = parse(bookid, page, pagetype)
-        db.insert_items(bookid, data, pnum=realnum)
+
+        if pagetype == -1:
+            lg.warning("Can't recognize page (pagenum=%s) in book (id=%s)."
+                     , str(realnum)
+                     , str(bookid))
+            lg.info("Page %s (bookid=%s) skipped.", str(realnum), str(bookid))
+            continue
+
+        lg.info("Parsing (pagenum=%s) of book (id=%s). Type (pagetype=%s)."
+              , str(realnum), str(bookid), str(pagetype))
+        try:
+            data = parse(bookid, page, pagetype)
+        except Exception as e:
+            exception_msg(lg, e
+                            , level="WARN"
+                            , text="Errors while parsing."
+                                   " Skip (pagenum=%s) of book (id=%s)"\
+                                    % (str(realnum), str(bookid)))
+            continue
+        else:
+            lg.info("Inserting items to DB."
+                    " (pagenum=%s) of book (id=%s). Type (pagetype=%s)."
+                  , str(realnum), str(bookid), str(pagetype))
+            db.insert_items(bookid, data, pnum=realnum)
 
         # Update page entry with parsed HTML
-        html = pdftohtml(page)
-        db.insert_page(bookid, realnum, data=html)
+        lg.info("Parsing to HTML (pagenum=%s) of book (id=%s)."
+              , str(realnum), str(bookid))
+        try:
+            html = pdftohtml(page)
+        except Exception as e:
+            exception_msg(lg, e
+                            , text="Cannot convert PDF to HTML."
+                                   " (pagenum=%s) of book (id=%s)"\
+                                   % (str(realnum), str(bookid)))
+        else:
+            lg.info("Inserting HTML to DB."
+                    " (pagenum=%s) of book (id=%s). Type (pagetype=%s)."
+                  , str(realnum), str(bookid), str(pagetype))
+            db.insert_page(bookid, realnum, data=html)
+
+        lg.info("Done with page."
+                " (pagenum=%s) of book (id=%s). Type (pagetype=%s)."
+              , str(realnum), str(bookid), str(pagetype))
 
 if __name__ == "__main__":
     argp = argparse.ArgumentParser()
@@ -78,13 +125,16 @@ if __name__ == "__main__":
     def isbookid(string):
         try:
             int(string)
-        except:
+        except TypeError:
+            lg.error("Wrong book id. Must be an integer")
             raise argparse.ArgumentTypeError("Book id must be integer")
         path = "data/book"+string+".pdf"
         if os.path.exists(path):
             return int(string)
         else:
-            argparse.ArgumentError("bookid", "The book with such id does not exist")
+            lg.error("Wrong book id. No such file: %s.pdf"
+                   , str(string))
+            raise argparse.ArgumentTypeError("The book with such id does not exist")
     argp.add_argument("bookid"
                      ,type=isbookid
                      ,help="Book id. The file should be named like book123.pdf"
@@ -107,8 +157,8 @@ if __name__ == "__main__":
                 first, last = part.split("-")
                 res = res|set(range(int(first), int(last)+1))
             else:
+                lg.error("Wrong input argument format.")
                 raise argparse.ArgumentTypeError("Wrong argument format")
-
         return res
     argp.add_argument("-p", "--pages"
                      ,type=isnumrange
@@ -124,4 +174,6 @@ if __name__ == "__main__":
     if len(args["pages"]) > 0:
         args["pages"] = args["pages"] - args["exclude"]
 
+    lg.info("Start parsing a book (id=%s). Pages: %s.", str(args["bookid"])
+        , ("all" if len(args["pages"]) == 0 else str(args["pages"])))
     BookParse(**args)

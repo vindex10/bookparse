@@ -1,5 +1,10 @@
+import logging
 import MySQLdb
+
 import misc
+from misc import exception_msg
+
+lg = logging.getLogger(__name__)
 
 class DBManager(object):
     """DBManager class needed to communicate with DB
@@ -10,9 +15,16 @@ class DBManager(object):
              }
     def __init__(self):
         self.config = misc.load_config("dbmanager", defcnf=self.config)
-        self.db = MySQLdb.connect(user=self.config["dbuser"]
+
+        try:
+            self.db = MySQLdb.connect(user=self.config["dbuser"]
                                  ,passwd=self.config["dbpass"]
                                  ,db=self.config["dbname"])
+        except MySQLdb.Error as e:
+            exception_msg(lg, e, level="ERR"
+                               , text="Can't connect to mysql db.")
+            raise
+
         self.db.set_character_set('utf8')
 
     def insert_page(self, bid, pagenum, data=None):
@@ -22,8 +34,9 @@ class DBManager(object):
             cur.execute("""SELECT id, isbn1, keyname
                 FROM book WHERE id=%s""", (bid,))
             bdata = cur.fetchone()
-        except:
-            print("DBManager: no such book with id "+str(bid))
+        except MySQLdb.Error as e:
+            exception_msg(lg, e, level="ERR"
+                               , text="No such book with id "+str(bid))
             raise
 
         query = """INSERT INTO pages (isbn1, keyname, pagedata, pagenum)
@@ -31,8 +44,13 @@ class DBManager(object):
                     UPDATE pagedata=%s"""
 
         # print(query % (bdata[1], bdata[2], data, pagenum))
-        cur.execute(query, (bdata[1], bdata[2], data, pagenum, data))
-        self.db.commit()
+        try:
+            cur.execute(query, (bdata[1], bdata[2], data, pagenum, data))
+            self.db.commit()
+        except MySQLdb.Error as e:
+            exception_msg(lg, e, level="ERR"
+                               , text="Can't insert page to DB")
+            raise
 
     def insert_item(self, bid, data, pnum=None):
         """Insert item to DB.items. Add info about book (isbn1, keyname),
@@ -50,8 +68,9 @@ class DBManager(object):
             cur.execute("""SELECT id, isbn1, keyname
                 FROM book WHERE id=%s""", (bid,))
             bdata = cur.fetchone()
-        except:
-            print("DBManager: no such book with id "+str(bid))
+        except MySQLdb.Error as e:
+            exception_msg(lg, e, level="ERR"
+                               , text="No such book with id "+str(bid))
             raise
 
         qdata = {key: data[key] for key in data.keys()
@@ -62,6 +81,8 @@ class DBManager(object):
             if pnum is not None:
                 qdata.update({"pagenum": pnum})
         else:
+            lg.info("No items in book (id=%s) on page (pagenum=%s) found."
+                  , str(bid), pnum if pnum is not None else -1)
             return
 
         keylist = list()
@@ -79,9 +100,14 @@ class DBManager(object):
         query = "INSERT INTO items (" + ",".join(keylist) + ")"\
                 " VALUES (" + paramkeys + ") ON DUPLICATE KEY"\
                 " UPDATE " + ",".join(updkeys)
-        cur.execute(query, tuple(valist + updvals))
 
-        self.db.commit()
+        try:
+            cur.execute(query, tuple(valist + updvals))
+            self.db.commit()
+        except MySQLdb.Error as e:
+            exception_msg(lg, e, level="ERR"
+                               , text="Can't insert item to DB")
+            raise
 
     def insert_items(self, bid, data, pnum=None):
         """Insert items to DB.items item-by-item.
@@ -98,7 +124,7 @@ class DBManager(object):
         cur.execute("SELECT id, image FROM items WHERE md5(image)=%s", (imhash,))
         try:
             res = cur.fetchone()[0]
-        except:
+        except MySQLdb.Error:
             res = "undefined"
 
         return res
