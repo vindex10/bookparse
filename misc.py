@@ -3,7 +3,12 @@ import logging
 import sys
 import traceback
 
-lg = logging.getLogger(__name__)
+def ownLogger(name=None):
+    lname = ".".join(["bookparse", name]) if name is not None else "bookparse"
+    log = logging.getLogger(lname)
+    return log
+
+lg = ownLogger(__name__)
 
 def load_config(cnfname, defcnf=None):
     """Load confiig from file at /config with name cnfname.conf,
