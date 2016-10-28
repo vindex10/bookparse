@@ -21,10 +21,10 @@
     }
     ,"loggers": {
          "pdfminer": {
-             "handlers": ["file"]
-            ,"level": "INFO"
+            "handlers": ["file"],
+            "level": "WARNING"
         }
-        ,"__main__": {
+        ,"bookparse": {
              "handlers": ["file", "console"]
             ,"level": "DEBUG"
         }
