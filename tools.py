@@ -80,10 +80,10 @@ def pdftohtml(page):
                 return "undefined"
 
             imhash = md5(fstream).hexdigest()
-            imgid = db.get_imgbyhash(imhash)
+            imgobj = db.get_imgbyhash(imhash)
 
-            if imgid is not "undefined":
-                return "items."+str(imgid)
+            if imgobj is not "undefined":
+                return imgobj["tabname"] + "." + str(imgobj["id"])
             else:
                 return "undefined"
 

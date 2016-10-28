@@ -49,13 +49,27 @@ def parse(page):
     #return parsed
     itemcounter = 2
 
-    res = list()
+    res = {"items": list()
+         , "nonitems": list()}
     images = list(filter(lambda item: item[0] is "Image",parsed))
 
-    for img in images:
-        res.append({"image": img[2], "itemonpage": itemcounter, "other": str(img[1])})
+
+    # treat first image as non-item
+    if len(images) > 0:
+        for img in images[0:1]:
+            res["nonitems"].append({"image": img[2]
+                                  , "name": itemcounter
+                                  , "description": str(img[1])})
         itemcounter += 1
 
-    res.append({"itemonpage": 1, "other": "something"})
+    # treat others as item-images
+    if len(images) > 1:
+        for img in images[1:]:
+            res["items"].append({"image": img[2]
+                               , "itemonpage": itemcounter
+                               , "other": str(img[1])})
+            itemcounter += 1
 
+
+    res["items"].append({"itemonpage": 1, "other": "something"})
     return res
