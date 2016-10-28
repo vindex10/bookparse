@@ -1,0 +1,32 @@
+{
+     "version": 1
+    ,"formatters": {
+        "standard": {
+            "format": "[%(levelname)s::%(lineno)d] %(asctime)s :: %(name)s: %(message)s"
+        }
+    }
+    ,"handlers": {
+         "file": {
+            "level": "DEBUG"
+            ,"class": "logging.handlers.RotatingFileHandler"
+            ,"formatter": "standard"
+            ,"filename": "logs/bookparse.log"
+            ,"backupCount": 5
+        }
+        ,"console": {
+             "level": "WARNING"
+            ,"class": "logging.StreamHandler"
+            ,"formatter": "standard"
+        }
+    }
+    ,"loggers": {
+         "pdfminer": {
+             "handlers": ["file"]
+            ,"level": "INFO"
+        }
+        ,"__main__": {
+             "handlers": ["file", "console"]
+            ,"level": "DEBUG"
+        }
+    }
+}
