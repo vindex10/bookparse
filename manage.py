@@ -1,5 +1,4 @@
 import argparse
-import logging
 import logging.config
 import os
 import sys
@@ -16,10 +15,10 @@ from pdfminer.layout import LAParams
 
 
 from tools import recognize, parse, pdftohtml
-from misc import load_config, exception_msg
+from misc import load_config, ownLogger, exception_msg
 from dbmanager import DBManager
 
-lg = logging.getLogger(__name__)
+lg = ownLogger()
 
 logconf = load_config("logging", defcnf={
      "version": 1

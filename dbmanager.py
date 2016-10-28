@@ -1,10 +1,9 @@
-import logging
 import MySQLdb
 
 import misc
-from misc import exception_msg
+from misc import ownLogger, exception_msg
 
-lg = logging.getLogger(__name__)
+lg = ownLogger(__name__)
 
 class DBManager(object):
     """DBManager class needed to communicate with DB

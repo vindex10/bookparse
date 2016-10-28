@@ -1,4 +1,3 @@
-import logging
 from io import BytesIO
 from importlib import import_module
 from hashlib import md5
@@ -7,13 +6,13 @@ from pdfminer.converter import HTMLConverter
 from pdfminer.layout import LAParams
 from pdfminer.pdfpage import PDFPage
 
-from misc import exception_msg
+from misc import ownLogger, exception_msg
 
 from dbmanager import DBManager
 db = DBManager()
 
 
-lg = logging.getLogger(__name__)
+lg = ownLogger(__name__)
 
 def recognize(bookid, page):
     """Gets bookid and page(instance of pdfminer.PDFPage), loads a collection
