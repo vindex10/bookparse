@@ -97,7 +97,13 @@ def BookParse(bookid, pages=None, exclude=None):
             lg.info("Inserting items to DB."
                     " (pagenum=%s) of book (id=%s). Type (pagetype=%s)."
                   , str(realnum), str(bookid), str(pagetype))
-            db.insert_items(bookid, data, pnum=realnum)
+            try:
+                db.bulk_insert(bookid, data, pnum=realnum)
+            except Exception as e:
+                exception_msg(lg, e
+                                , level="ERR"
+                                , text="Errors during inserting data into DB."
+                                       " Maybe you should check the parser")
 
         # Update page entry with parsed HTML
         lg.info("Parsing to HTML (pagenum=%s) of book (id=%s)."
